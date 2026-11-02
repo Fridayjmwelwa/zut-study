@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07536a">
+  <meta name="description" content="ZUT Study helps students organise course resources, past papers and study time.">
+  <title>ZUT Study | Study Smarter. Achieve More.</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Authentication screen -->
+  <div id="auth-screen" hidden>
+    <div class="auth-shell">
+      <div class="auth-brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 48"><path d="M2 14 32 2l30 12-30 12L2 14Z"/><path d="M14 20v12c10 8 26 8 36 0V20L32 30 14 20Z"/><path d="M59 16v17"/></svg>
+        </div>
+        <h1>ZUT Study</h1>
+        <p>Study Smarter. Achieve More.</p>
+      </div>
+
+      <div class="auth-box">
+        <h2 id="auth-title">Welcome Back!</h2>
+        <p id="auth-sub" class="auth-sub">Log in to continue</p>
+
+        <div id="signup-fields" class="field-stack" hidden>
+          <label class="input-wrap">
+            <span class="sr-only">Full name</span>
+            <span class="input-icon" aria-hidden="true">♙</span>
+            <input id="auth-name" type="text" placeholder="Full name" autocomplete="name">
+          </label>
+          <label class="input-wrap">
+            <span class="sr-only">Student number</span>
+            <span class="input-icon" aria-hidden="true">▤</span>
+            <input id="auth-number" type="text" placeholder="Student number" autocomplete="off">
+          </label>
+        </div>
+
+        <div class="field-stack">
+          <label class="input-wrap">
+            <span class="sr-only">Email address</span>
+            <span class="input-icon" aria-hidden="true">✉</span>
+            <input id="auth-email" type="email" placeholder="Email address" autocomplete="email" required>
+          </label>
+          <label class="input-wrap">
+            <span class="sr-only">Password</span>
+            <span class="input-icon" aria-hidden="true">▣</span>
+            <input id="auth-password" type="password" placeholder="Password" autocomplete="current-password" required>
+          </label>
+        </div>
+
+        <button id="auth-submit" class="btn btn-primary auth-submit" onclick="submitAuth()">Log In</button>
+        <p id="auth-message" class="form-message" role="status" aria-live="polite"></p>
+        <div class="auth-divider"><span>or</span></div>
+        <button id="auth-switch-btn" class="btn btn-secondary" onclick="toggleAuthMode()">Create Account</button>
+        <a id="auth-forgot" class="forgot-link" href="#" onclick="forgotPassword(); return false;">Forgot Password?</a>
+      </div>
+      <p class="auth-footnote">A smarter way to manage your studies at ZUT.</p>
+    </div>
+  </div>
+
+  <!-- Main application -->
+  <div id="app" hidden>
+    <header class="app-header">
+      <div class="header-inner">
+        <a class="brand-small" href="#" aria-label="ZUT Study home" onclick="showTab('home'); return false;">
+          <span class="brand-mark small" aria-hidden="true"><svg viewBox="0 0 64 48"><path d="M2 14 32 2l30 12-30 12L2 14Z"/><path d="M14 20v12c10 8 26 8 36 0V20L32 30 14 20Z"/><path d="M59 16v17"/></svg></span>
+          <span>ZUT Study</span>
+        </a>
+        <span class="header-tagline">Your academic companion</span>
+        <span class="header-bell" aria-hidden="true">♧</span>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <!-- HOME -->
+      <section id="home-page" class="page home-page">
+        <div class="welcome-row">
+          <div>
+            <p class="eyebrow">YOUR STUDY SPACE</p>
+            <h1 id="home-greeting">Hello, Student 👋</h1>
+            <p class="muted">Ready to study today?</p>
+          </div>
+          <div class="welcome-avatar" aria-hidden="true">✦</div>
+        </div>
+
+        <button class="continue-card" onclick="continueLearning()">
+          <span class="continue-copy"><span class="continue-label">Continue Learning</span><strong id="continue-title">Choose a course</strong></span>
+          <span class="circle-arrow" aria-hidden="true">›</span>
+        </button>
+
+        <div class="section-heading"><h2>Quick Access</h2><span class="section-note">Everything in one place</span></div>
+        <div class="quick-grid">
+          <button class="quick-card" onclick="showTab('library')"><span class="quick-icon">▤</span><strong>Library</strong><small>Past papers & notes</small></button>
+          <button class="quick-card" onclick="showTab('ai')"><span class="quick-icon brain">✧</span><strong>AI Tutor</strong><small>Get study help</small></button>
+          <button class="quick-card" onclick="showTab('calendar')"><span class="quick-icon">▦</span><strong>Academic Calendar</strong><small>Events & reminders</small></button>
+          <button class="quick-card" onclick="showTab('planner')"><span class="quick-icon">▣</span><strong>Study Planner</strong><small>Plan your study</small></button>
+        </div>
+
+        <div class="section-heading courses-heading"><h2>My Courses</h2><button class="text-action" onclick="showTab('library')">View all <span aria-hidden="true">→</span></button></div>
+        <div id="home-courses" class="course-grid">
+          <div class="empty">Your courses will appear here after they are loaded.</div>
+        </div>
+        <div class="study-tip"><span class="tip-icon">✦</span><p><strong>Small steps add up.</strong><br>Set aside a little time each day to review your course materials.</p></div>
+      </section>
+
+      <!-- LIBRARY -->
+      <section id="library-page" class="page" hidden>
+        <div class="page-heading"><p class="eyebrow">YOUR ACADEMIC RESOURCES</p><h1>Library</h1><p class="muted">Find past papers and study materials by course.</p></div>
+        <label class="search-box"><span aria-hidden="true">⌕</span><span class="sr-only">Search library</span><input id="library-search" type="search" placeholder="Search course code, year or material..."></label>
+        <div class="segmented-tabs" role="group" aria-label="Library resource type">
+          <button id="lib-tab-papers" class="active" onclick="setLibraryMode('papers')">Past Papers</button>
+          <button id="lib-tab-materials" onclick="setLibraryMode('materials')">Study Materials</button>
+        </div>
+        <button id="lib-scope-btn" class="text-action scope-btn" onclick="toggleLibraryScope()" hidden></button>
+        <div id="library-list" class="library-list">
+          <div class="empty">Your course resources will appear here.</div>
+        </div>
+      </section>
+
+      <!-- COURSE DETAIL -->
+      <section id="course-page" class="page" hidden>
+        <button class="back-btn" onclick="goBack()"><span aria-hidden="true">←</span> Back to Library</button>
+        <div class="course-hero">
+          <div class="course-hero-art" aria-hidden="true"><span>⌘</span><span>▤</span><span>⌁</span></div>
+          <div class="course-hero-copy"><p class="eyebrow">COURSE RESOURCES</p><h1 id="course-hero-title">ICT1100</h1><p id="course-hero-sub">Computer Science</p></div>
+        </div>
+        <div class="segmented-tabs course-tabs" role="group" aria-label="Course resource type">
+          <button id="course-tab-papers" class="active" onclick="setCourseTab('papers')">Past Papers</button>
+          <button id="course-tab-materials" onclick="setCourseTab('materials')">Study Materials</button>
+        </div>
+        <div id="course-papers-panel" class="resource-panel">
+          <div class="section-heading"><h2>Past Papers</h2><span class="section-note">Practice with previous exams</span></div>
+          <ul id="course-papers" class="resource-list"><li class="empty">No past papers uploaded yet.</li></ul>
+        </div>
+        <div id="course-materials-panel" class="resource-panel" hidden>
+          <div class="section-heading"><h2>Study Materials</h2><span class="section-note">Notes and learning resources</span></div>
+          <ul id="course-materials" class="resource-list"><li class="empty">No study materials uploaded yet.</li></ul>
+        </div>
+      </section>
+
+      <!-- AI TUTOR -->
+      <section id="ai-page" class="page" hidden>
+        <div class="page-heading"><p class="eyebrow">LEARN WITH CONFIDENCE</p><h1>AI Tutor</h1><p class="muted">Ask questions and work through difficult topics.</p></div>
+        <div class="tutor-intro">
+          <div class="tutor-orb" aria-hidden="true"><span>✦</span><i></i></div>
+          <h2>Your AI Study Assistant</h2>
+          <p>Get explanations, explore ideas and strengthen your understanding.</p>
+        </div>
+        <div id="chat-messages" class="chat-messages" aria-live="polite" aria-label="Chat messages">
+          <div class="msg msg-ai">Hello! I'm your study assistant. What topic would you like help understanding?</div>
+        </div>
+        <div class="chat-composer">
+          <label class="sr-only" for="chat-input">Ask your study question</label>
+          <input id="chat-input" type="text" placeholder="Ask me anything..." autocomplete="off">
+          <button id="chat-send" class="send-btn" onclick="sendChat()" aria-label="Send message">➤</button>
+        </div>
+        <div class="suggestions"><h3>Try asking</h3>
+          <div class="chip-row">
+            <button class="chip" onclick="askChip(this.innerText)">Explain recursion</button>
+            <button class="chip" onclick="askChip(this.innerText)">Summarise this topic</button>
+            <button class="chip" onclick="askChip(this.innerText)">Give me practice questions</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRACTICE -->
+      <section id="practice-page" class="page" hidden>
+        <div class="page-heading"><p class="eyebrow">CHECK YOUR UNDERSTANDING</p><h1>Practice & Quizzes</h1><p class="muted">Build confidence before your next assessment.</p></div>
+        <div class="practice-feature">
+          <div class="practice-check" aria-hidden="true">✓</div>
+          <h2>Test Your Knowledge</h2>
+          <p>Take quizzes and practise questions to prepare for exams.</p>
+          <button class="btn btn-primary" onclick="startQuiz()">Start Quiz <span aria-hidden="true">→</span></button>
+        </div>
+        <div class="section-heading"><h2>Your Progress</h2><span class="section-note">A little progress every day</span></div>
+        <div class="progress-card">
+          <div class="progress-ring"><span>75<small>%</small></span></div>
+          <div class="progress-stats"><div><strong>75%</strong><span>Overall score</span></div><div><strong>3 / 4</strong><span>Quizzes completed</span></div></div>
+        </div>
+        <p class="muted small-note">Progress figures are sample placeholders until quiz tracking is connected.</p>
+      </section>
+
+      <!-- ACADEMIC CALENDAR -->
+      <section id="calendar-page" class="page" hidden>
+        <button class="back-btn" onclick="goBack()"><span aria-hidden="true">←</span> Back</button>
+        <div class="page-heading"><p class="eyebrow">STAY UP TO DATE</p><h1>Academic Calendar</h1><p class="muted">Official ZUT dates and your personal reminders.</p></div>
+        <div class="calendar-card">
+          <div class="calendar-month-row"><button class="calendar-nav" onclick="changeCalendarMonth(-1)" aria-label="Previous month">‹</button><h2 id="calendar-month-title">Month Year</h2><button class="calendar-nav" onclick="changeCalendarMonth(1)" aria-label="Next month">›</button></div>
+          <div class="calendar-weekdays"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+          <div id="calendar-days" class="calendar-days"></div>
+          <p class="calendar-legend"><span class="legend-dot official-dot"></span> Official ZUT <span class="legend-dot personal-dot"></span> My reminder</p>
+        </div>
+        <div class="section-heading"><h2 id="calendar-selected-title">Upcoming events</h2><span class="section-note">Select a date to view</span></div>
+        <div id="calendar-event-list" class="calendar-event-list"><div class="empty">Loading calendar events...</div></div>
+        <div class="section-heading"><h2>Add a personal reminder</h2><span class="section-note">Only visible to you</span></div>
+        <form id="reminder-form" class="calendar-form" onsubmit="saveReminder(event)">
+          <label>Reminder title<input id="reminder-title" type="text" maxlength="120" placeholder="e.g. Submit database assignment" required></label>
+          <label>Date<input id="reminder-date" type="date" required></label>
+          <label>Details (optional)<textarea id="reminder-description" rows="3" maxlength="500" placeholder="Add a note about this reminder"></textarea></label>
+          <button class="btn btn-primary" type="submit">Save Reminder</button>
+          <p id="reminder-message" class="form-message" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <!-- STUDY PLANNER -->
+      <section id="planner-page" class="page" hidden>
+        <button class="back-btn" onclick="goBack()"><span aria-hidden="true">←</span> Back</button>
+        <div class="page-heading"><p class="eyebrow">MAKE TIME TO LEARN</p><h1>Study Planner</h1><p class="muted">Organise your learning and stay on track.</p></div>
+        <div class="coming-card"><span class="coming-icon">▣</span><h2>Coming soon</h2><p>Your personal study planner is being prepared.</p></div>
+      </section>
+
+      <!-- STUDY SETUP -->
+      <section id="setup-page" class="page" hidden>
+        <div class="page-heading"><p class="eyebrow">SET UP YOUR STUDIES</p><h1>Your Courses</h1><p class="muted">Choose your school, program and year, then tick the courses you take.</p></div>
+        <div class="profile-panel setup-card">
+          <label>School<select id="setup-school" onchange="onSetupSchool()"></select></label>
+          <label>Program<select id="setup-program" onchange="onSetupProgram()"></select></label>
+          <label>Year of study<select id="setup-year" onchange="onSetupYear()"></select></label>
+        </div>
+        <div class="section-heading"><h2>My Courses</h2><span class="section-note">Tick the ones you take</span></div>
+        <div id="setup-courses" class="check-list"></div>
+        <details id="setup-other-box" class="faq-item setup-other-box"><summary>Add courses from other programs</summary><div id="setup-other" class="check-list"></div></details>
+        <button class="btn btn-primary setup-save" onclick="saveSetup()">Save and Continue</button>
+        <p id="setup-message" class="form-message" role="status"></p>
+        <button id="skip-setup-btn" class="text-action" onclick="skipSetup()" hidden>Skip for now</button>
+      </section>
+      <!-- PROFILE -->
+      <section id="profile-page" class="page" hidden>
+        <div class="profile-top"><div><p class="eyebrow">YOUR ACCOUNT</p><h1>Profile</h1></div><span class="profile-settings-icon" aria-hidden="true">⚙</span></div>
+        <div class="profile-card">
+          <div id="avatar" class="avatar">JD</div>
+          <div class="profile-identity"><strong id="profile-name">Student Name</strong><span id="profile-email">student@zut.ac.zm</span></div>
+        </div>
+
+        <div class="section-heading profile-section-heading"><h2>Student Details</h2><button class="text-action" onclick="toggleEditDetails()">Edit</button></div>
+        <div class="details-card">
+          <div class="detail-line"><span class="detail-icon">♙</span><span><small>Student Number</small><strong id="profile-number">Not added</strong></span></div>
+          <div class="detail-line"><span class="detail-icon">▤</span><span><small>Main Course</small><strong id="profile-course">Not selected</strong></span></div>
+          <div class="detail-line"><span class="detail-icon">▦</span><span><small>Program</small><strong id="profile-program">Not set up</strong></span></div>
+        </div>
+        <div id="edit-details" class="profile-panel" hidden>
+          <label>Full name<input id="set-name" type="text" autocomplete="name"></label>
+          <label>Student number<input id="set-number" type="text"></label>
+          <label>Main course<select id="set-course"><option value="">Select your main course</option></select></label>
+          <button class="btn btn-primary" onclick="saveDetails()">Save Details</button>
+          <p id="details-message" class="form-message" role="status"></p>
+        </div>
+
+        <div class="profile-menu">
+          <button class="menu-row" onclick="openSetup(false)"><span class="menu-icon">▤</span><span>My Courses &amp; Program</span><span class="menu-arrow">›</span></button>
+          <button class="menu-row" onclick="togglePanel('prefs-panel')"><span class="menu-icon">⚙</span><span>Preferences</span><span class="menu-arrow">›</span></button>
+          <div id="prefs-panel" class="profile-panel" hidden><label class="toggle-row" for="set-dark"><span><strong>Dark mode</strong><small>Use a darker appearance</small></span><input id="set-dark" type="checkbox"></label></div>
+
+          <button class="menu-row" onclick="togglePanel('password-panel')"><span class="menu-icon">♙</span><span>Change Password</span><span class="menu-arrow">›</span></button>
+          <div id="password-panel" class="profile-panel" hidden><label>New password<input id="new-password" type="password" placeholder="At least 6 characters" autocomplete="new-password"></label><button class="btn btn-primary" onclick="changePassword()">Update Password</button><p id="password-message" class="form-message" role="status"></p></div>
+
+          <button class="menu-row" onclick="togglePanel('help-panel')"><span class="menu-icon">?</span><span>Help &amp; Support</span><span class="menu-arrow">›</span></button>
+          <div id="help-panel" class="profile-panel" hidden>
+            <details class="faq-item"><summary>How do I find past papers?</summary><p>Open the Library, choose Past Papers and search by course code or year.</p></details>
+            <details class="faq-item"><summary>Where can I find study materials?</summary><p>Open the Library and select Study Materials, or open a course to view its resources.</p></details>
+            <details class="faq-item"><summary>How do I reset my password?</summary><p>Use the Forgot Password link on the login screen.</p></details>
+            <a id="support-link" class="support-link" href="mailto:support@example.com">Contact support</a>
+          </div>
+
+          <button class="menu-row" onclick="togglePanel('about-panel')"><span class="menu-icon">ⓘ</span><span>About ZUT Study</span><span class="menu-arrow">›</span></button>
+          <div id="about-panel" class="profile-panel" hidden><h3>Study Smarter. Achieve More.</h3><p>ZUT Study is a student-focused space for finding learning resources and building better study habits.</p></div>
+          <button class="menu-row" onclick="openPortal()"><span class="menu-icon">↗</span><span>ZUT Student Portal</span><span class="menu-arrow">›</span></button>
+        </div>
+        <button class="logout-btn" onclick="logOut()">Log Out</button>
+        <p class="version-note">ZUT Study · Your academic companion</p>
+      </section>
+    </main>
+
+    <!-- Fixed bottom navigation -->
+    <nav id="bottom-nav" aria-label="Main navigation">
+      <button data-tab="home" class="active" onclick="showTab('home')"><span class="nav-icon" aria-hidden="true">⌂</span><span>Home</span></button>
+      <button data-tab="library" onclick="showTab('library')"><span class="nav-icon" aria-hidden="true">▤</span><span>Library</span></button>
+      <button data-tab="ai" onclick="showTab('ai')"><span class="nav-icon" aria-hidden="true">✧</span><span>AI Tutor</span></button>
+      <button data-tab="practice" onclick="showTab('practice')"><span class="nav-icon" aria-hidden="true">☑</span><span>Practice</span></button>
+      <button data-tab="profile" onclick="showTab('profile')"><span class="nav-icon" aria-hidden="true">♙</span><span>Profile</span></button>
+    </nav>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js"></script>
+</body>
+</html>
