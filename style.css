@@ -315,3 +315,69 @@ body.setup-mode .app-main { padding-bottom: 28px; }
 .calendar-form label { display: grid; gap: 6px; color: var(--muted-strong); font-size: 12px; font-weight: 650; }
 .calendar-form input, .calendar-form textarea { width: 100%; min-height: 42px; padding: 10px 11px; border: 1px solid var(--border); border-radius: 10px; color: var(--text); background: var(--bg); resize: vertical; }
 .calendar-form .btn { width: 100%; }
+
+/* Premium Academic — Royal Navy & Gold, entire interface */
+:root {
+  --bg:#F5F1E8; --surface:#FFFFFF; --surface-soft:#F0EAE0;
+  --text:#142B4A; --muted:#627083; --muted-strong:#394C65;
+  --primary:#142B4A; --primary-deep:#0C1D34; --primary-bright:#916B28;
+  --accent:#D6AD60; --accent-soft:#F9EED8; --border:#E5DCCB;
+  --shadow:0 7px 24px rgba(20,43,74,.08);
+  --shadow-strong:0 16px 40px rgba(20,43,74,.15);
+  --nav-height:92px;
+}
+body.dark {
+  --bg:#0D1829; --surface:#152841; --surface-soft:#203753;
+  --text:#F7F1E6; --muted:#B7C3D3; --muted-strong:#E1E6EC;
+  --primary:#D6AD60; --primary-deep:#0C1D34; --primary-bright:#E8C47C;
+  --accent:#D6AD60; --accent-soft:#3B342B; --border:#34435B;
+}
+body { background:radial-gradient(ellipse at top right,rgba(214,173,96,.12),transparent 50%),var(--bg); }
+.app-header { background:linear-gradient(115deg,#10233E,#1A3A5B); border-bottom:2px solid #D6AD60; }
+#auth-screen { background:radial-gradient(circle at 80% 12%,rgba(214,173,96,.24),transparent 34%),linear-gradient(145deg,#1A3A5B,#0C1D34 75%); }
+.auth-box { border:1px solid #E9DCC3; }
+.auth-brand .brand-mark svg { fill:#D6AD60; }
+.btn-primary { color:#142B4A; background:linear-gradient(110deg,#E8C77F,#D6AD60); box-shadow:0 6px 16px rgba(128,91,33,.2); }
+.btn-primary:hover { filter:brightness(1.04); }
+.input-wrap:focus-within { border-color:#D6AD60; box-shadow:0 0 0 3px rgba(214,173,96,.18); }
+.eyebrow { color:var(--primary-bright); }
+.quick-card,.continue-card,.calendar-card,.calendar-form,.profile-menu { border-radius:19px; }
+.quick-card { transition:transform .2s ease,box-shadow .2s ease; }
+.quick-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-strong); }
+.calendar-day.selected { color:#142B4A; background:#D6AD60; font-weight:800; }
+.calendar-day.today { border-color:#D6AD60; }
+.official-dot { background:#244B76; }
+.personal-dot { background:#D6AD60; }
+a { color:var(--primary-bright); }
+#bottom-nav {
+ left:50%; right:auto; width:min(calc(100% - 20px),620px);
+ transform:translateX(-50%); bottom:calc(10px + env(safe-area-inset-bottom));
+ min-height:74px; padding:8px 6px 10px; overflow:visible;
+ border:1px solid #E6DDCD; border-radius:27px;
+ background:#fff; box-shadow:0 14px 36px rgba(12,29,52,.20);
+ align-items:center;
+}
+#bottom-nav button { min-height:54px; border-radius:17px; color:#647085; gap:4px; font-size:10px; font-weight:650; }
+#bottom-nav button.active { background:transparent; color:#9B712B; }
+#bottom-nav button:focus-visible { outline:2px solid #D6AD60; outline-offset:0; }
+.nav-icon { width:30px; height:30px; display:grid; place-items:center; }
+.nav-icon svg { width:24px; height:24px; display:block; }
+#bottom-nav button[data-tab="ai"] { position:relative; align-self:center; }
+#bottom-nav button[data-tab="ai"] .nav-icon {
+ width:58px; height:58px; margin-top:-28px;
+ background:linear-gradient(145deg,#EBCB89,#D6AD60);
+ color:#142B4A; border:5px solid #fff; border-radius:50%;
+ box-shadow:0 6px 15px rgba(20,43,74,.2);
+}
+#bottom-nav button[data-tab="ai"] .nav-icon svg { width:27px; height:27px; }
+#bottom-nav button[data-tab="ai"].active .nav-icon { background:#142B4A; color:#D6AD60; }
+#bottom-nav button[data-tab="ai"] { gap:0; }
+body.setup-mode #bottom-nav { display:none; }
+@media(min-width:800px) {
+ .app-main { max-width:860px; padding:30px 28px 45px; }
+}
+@media(max-width:360px) {
+ #bottom-nav { width:calc(100% - 12px); padding-inline:2px; }
+ #bottom-nav button { font-size:9px; }
+ #bottom-nav button[data-tab="ai"] .nav-icon { width:53px; height:53px; }
+}
