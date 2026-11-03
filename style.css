@@ -381,3 +381,33 @@ body.setup-mode #bottom-nav { display:none; }
  #bottom-nav button { font-size:9px; }
  #bottom-nav button[data-tab="ai"] .nav-icon { width:53px; height:53px; }
 }
+
+/* Study Planner — Premium Academic */
+.planner-stats {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0;}
+.planner-stat {background:var(--surface);border:1px solid var(--border);border-radius:17px;padding:15px 12px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:3px;}
+.planner-stat strong {font-size:1.5rem;color:var(--text);}
+.planner-stat span {font-size:.78rem;color:var(--muted);}
+.planner-layout {display:grid;grid-template-columns:1fr;gap:18px;align-items:start;}
+.planner-form {margin:0;display:grid;gap:12px;}
+.planner-form h2 {margin:0;color:var(--text);font-size:1.15rem;}
+.planner-form label {display:grid;gap:6px;color:var(--text);font-weight:650;font-size:.85rem;}
+.planner-form input,.planner-form select {width:100%;min-width:0;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font:inherit;}
+.planner-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.planner-fields label:last-child {grid-column:1/-1;}
+.planner-actions {display:flex;gap:10px;flex-wrap:wrap;}
+.planner-actions button {padding:12px 16px;border-radius:12px;cursor:pointer;}
+.planner-schedule {background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:var(--shadow);}
+.planner-week-nav {display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px;}
+.planner-week-nav h2 {font-size:1rem;margin:0;text-align:center;}
+.planner-day {padding:12px 0;border-top:1px solid var(--border);}
+.planner-day h3 {font-size:.92rem;color:var(--text);margin:0 0 9px;}
+.planner-empty {font-size:.83rem;margin:0;}
+.planner-session {background:var(--surface-soft);border-left:3px solid #D6AD60;border-radius:12px;padding:12px;margin:8px 0;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.planner-session.completed {opacity:.72;border-left-color:#4F9A7E;}
+.planner-session-detail {min-width:0;flex:1 1 180px;}
+.planner-session-detail strong {font-size:.85rem;overflow-wrap:anywhere;}
+.planner-session-detail p {margin:5px 0 0;font-size:.85rem;overflow-wrap:anywhere;}
+.planner-session-actions {display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+.planner-session-actions button {background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px;color:var(--text);cursor:pointer;font-size:.78rem;}
+@media(min-width:850px){.planner-layout{grid-template-columns:minmax(260px,.9fr) minmax(0,1.1fr);}}
+@media(max-width:360px){.planner-fields{grid-template-columns:1fr;}.planner-fields label:last-child{grid-column:auto;}}

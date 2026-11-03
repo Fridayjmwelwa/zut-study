@@ -13,6 +13,10 @@ let courses = [];
 let materials = [];
 let officialEvents = [];
 let personalReminders = [];
+let studySessions = [];
+let plannerWeekStart = startOfPlannerWeek(new Date());
+let plannerEditingId = null;
+let plannerLoadError = "";
 let calendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let calendarSelectedDate = localDateString(new Date());
 let schools = [];
@@ -69,6 +73,7 @@ async function loadAll() {
 
   await loadStudyData();
   await loadCalendarData();
+  await loadStudySessions();
   renderAll();
   maybeShowSetup();
 }
@@ -80,6 +85,7 @@ function renderAll() {
   fillCourseSelect();
   fillProfile();
   renderCalendar();
+  renderStudyPlanner();
 }
 
 // ================= HELPERS =================
@@ -200,6 +206,7 @@ function showTab(name, fromBack) {
   }
 
   renderPage(name);
+  if (name === "planner") renderStudyPlanner();
   if (name === "calendar") { if (el("reminder-date") && !el("reminder-date").value) el("reminder-date").value = localDateString(new Date()); renderCalendar(); }
 }
 
@@ -763,6 +770,9 @@ function showAuthState(session) {
     materials = [];
     officialEvents = [];
     personalReminders = [];
+    studySessions = [];
+    plannerEditingId = null;
+    plannerLoadError = "";
     schools = [];
     programs = [];
     programCourses = [];
@@ -1022,6 +1032,8 @@ async function saveSetup() {
   settings.setupSkipped = false;
   saveSettings();
   renderAll();
+  await loadStudySessions();
+  renderStudyPlanner();
   showTab("home");
 }
 
@@ -1029,6 +1041,164 @@ function skipSetup() {
   settings.setupSkipped = true;
   saveSettings();
   showTab("home");
+}
+
+
+// ================= STUDY PLANNER =================
+// Registered courses come exclusively from student_courses (myCodes).
+function startOfPlannerWeek(value) {
+  const d = new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d;
+}
+function plannerDate(d) { return localDateString(d); }
+function plannerRegisteredCourses() {
+  return courses.filter(c => myCodes.some(code => sameCode(code, c.code)));
+}
+function plannerCourseIsRegistered(code) {
+  return myCodes.some(c => sameCode(c, code)) && courses.some(c => sameCode(c.code, code));
+}
+function plannerDateTime(s) {
+  return new Date(s.session_date + "T" + s.start_time.slice(0,5) + ":00");
+}
+function plannerFormatDay(date) {
+  return date.toLocaleDateString(undefined, {weekday:"short", month:"short", day:"numeric"});
+}
+async function loadStudySessions() {
+  if (!currentUser) return;
+  const uid = currentUser.id;
+  const {data,error} = await db.from("study_sessions")
+    .select("id,course_code,topic,session_date,start_time,duration_minutes,completed")
+    .eq("user_id",uid).order("session_date",{ascending:true}).order("start_time",{ascending:true});
+  if (currentUser?.id !== uid) return;
+  if (error) {
+    plannerLoadError = "Study Planner database isn't ready. Run study_planner_setup.sql in Supabase. " + error.message;
+    studySessions = [];
+  } else {
+    plannerLoadError = "";
+    studySessions = data || [];
+  }
+  renderStudyPlanner();
+}
+function resetPlannerForm() {
+  plannerEditingId = null;
+  const form = el("planner-form");
+  if (!form) return;
+  form.reset();
+  el("planner-date").value = plannerDate(new Date());
+  el("planner-time").value = "18:00";
+  el("planner-duration").value = 60;
+  el("planner-form-title").textContent = "Schedule a study session";
+  el("planner-save").textContent = "Save session";
+  el("planner-notice").textContent = "";
+}
+function renderStudyPlanner() {
+  if (!el("planner-course")) return;
+  const select = el("planner-course");
+  const previous = select.value;
+  select.replaceChildren();
+  const registered = plannerRegisteredCourses();
+  registered.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c.code;
+    opt.textContent = c.code + " — " + (c.name || "Course");
+    select.appendChild(opt);
+  });
+  if (registered.some(c => c.code === previous)) select.value = previous;
+  const noCourses = registered.length === 0;
+  const notice = el("planner-notice");
+  if (plannerLoadError) notice.textContent = plannerLoadError;
+  else if (noCourses) notice.textContent = "No registered courses found. Go to Profile → Your Courses to choose your programme, year and courses.";
+  else if (!plannerEditingId) notice.textContent = "Only courses registered to your account are available.";
+  el("planner-save").disabled = noCourses || !!plannerLoadError;
+  const total = studySessions.length;
+  const completed = studySessions.filter(s => s.completed).length;
+  const minutes = studySessions.filter(s => s.completed).reduce((n,s)=>n+Number(s.duration_minutes),0);
+  el("planner-stats").replaceChildren();
+  [[String(total),"Sessions"],[String(completed),"Completed"],[String(Math.round(minutes/60*10)/10)+"h","Studied"]].forEach(([v,l])=>{
+    const card=document.createElement("div"); card.className="planner-stat";
+    const strong=document.createElement("strong"); strong.textContent=v;
+    const small=document.createElement("span"); small.textContent=l;
+    card.append(strong,small); el("planner-stats").append(card);
+  });
+  const start = new Date(plannerWeekStart);
+  const end = new Date(start); end.setDate(end.getDate()+6);
+  el("planner-week-label").textContent = plannerFormatDay(start) + " – " + plannerFormatDay(end);
+  const list=el("planner-week-list"); list.replaceChildren();
+  for(let i=0;i<7;i++){
+    const d=new Date(start); d.setDate(d.getDate()+i);
+    const date=plannerDate(d);
+    const section=document.createElement("section"); section.className="planner-day";
+    const title=document.createElement("h3"); title.textContent=plannerFormatDay(d); section.append(title);
+    const matches=studySessions.filter(s=>s.session_date===date && plannerCourseIsRegistered(s.course_code));
+    if(!matches.length){
+      const empty=document.createElement("p"); empty.className="muted planner-empty"; empty.textContent="No sessions scheduled"; section.append(empty);
+    }
+    matches.forEach(s=>{
+      const item=document.createElement("div"); item.className="planner-session"+(s.completed?" completed":"");
+      const details=document.createElement("div"); details.className="planner-session-detail";
+      const heading=document.createElement("strong"); heading.textContent=s.course_code+" · "+s.start_time.slice(0,5)+" · "+s.duration_minutes+" min";
+      const topic=document.createElement("p"); topic.textContent=s.topic;
+      details.append(heading,topic);
+      const actions=document.createElement("div"); actions.className="planner-session-actions";
+      const complete=document.createElement("button"); complete.type="button"; complete.textContent=s.completed?"Undo":"Complete"; complete.onclick=()=>setStudySessionCompleted(s.id,!s.completed);
+      const edit=document.createElement("button"); edit.type="button"; edit.textContent="Edit"; edit.onclick=()=>editStudySession(s.id);
+      const del=document.createElement("button"); del.type="button"; del.textContent="Delete"; del.onclick=()=>deleteStudySession(s.id);
+      actions.append(complete,edit,del); item.append(details,actions); section.append(item);
+    });
+    list.append(section);
+  }
+}
+function movePlannerWeek(direction) {
+  plannerWeekStart = new Date(plannerWeekStart.getFullYear(),plannerWeekStart.getMonth(),plannerWeekStart.getDate()+direction*7);
+  renderStudyPlanner();
+}
+function editStudySession(id) {
+  const s=studySessions.find(x=>x.id===id);
+  if(!s || !plannerCourseIsRegistered(s.course_code)) return;
+  plannerEditingId=id;
+  renderStudyPlanner();
+  el("planner-course").value=s.course_code;
+  el("planner-topic").value=s.topic;
+  el("planner-date").value=s.session_date;
+  el("planner-time").value=s.start_time.slice(0,5);
+  el("planner-duration").value=s.duration_minutes;
+  el("planner-form-title").textContent="Edit study session";
+  el("planner-save").textContent="Update session";
+  el("planner-form").scrollIntoView({behavior:"smooth",block:"start"});
+}
+async function saveStudySession(event) {
+  event.preventDefault();
+  if(!currentUser || plannerLoadError) return;
+  const course_code=el("planner-course").value;
+  if(!plannerCourseIsRegistered(course_code)){el("planner-notice").textContent="Choose one of your registered courses.";return;}
+  const topic=el("planner-topic").value.trim();
+  const session_date=el("planner-date").value;
+  const start_time=el("planner-time").value;
+  const duration_minutes=Number(el("planner-duration").value);
+  if(!topic || topic.length>160 || !/^\d{4}-\d{2}-\d{2}$/.test(session_date) || !/^\d{2}:\d{2}$/.test(start_time) || !Number.isInteger(duration_minutes) || duration_minutes<15 || duration_minutes>480){
+    el("planner-notice").textContent="Enter a valid topic, date, start time and duration (15–480 minutes)."; return;
+  }
+  const save=el("planner-save"); save.disabled=true;
+  const payload={course_code,topic,session_date,start_time,duration_minutes};
+  const result=plannerEditingId
+    ? await db.from("study_sessions").update(payload).eq("id",plannerEditingId).eq("user_id",currentUser.id)
+    : await db.from("study_sessions").insert({...payload,user_id:currentUser.id});
+  if(result.error) el("planner-notice").textContent="Could not save: "+result.error.message;
+  else {resetPlannerForm(); plannerWeekStart=startOfPlannerWeek(new Date(session_date+"T12:00:00")); await loadStudySessions();}
+  save.disabled=false;
+}
+async function setStudySessionCompleted(id,completed) {
+  if(!currentUser) return;
+  const result=await db.from("study_sessions").update({completed}).eq("id",id).eq("user_id",currentUser.id);
+  if(result.error) alert("Could not update session: "+result.error.message);
+  else await loadStudySessions();
+}
+async function deleteStudySession(id) {
+  if(!currentUser || !confirm("Delete this study session?")) return;
+  const result=await db.from("study_sessions").delete().eq("id",id).eq("user_id",currentUser.id);
+  if(result.error) alert("Could not delete session: "+result.error.message);
+  else {if(plannerEditingId===id) resetPlannerForm(); await loadStudySessions();}
 }
 
 // ================= START =================

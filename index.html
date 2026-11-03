@@ -208,7 +208,32 @@
       <section id="planner-page" class="page" hidden>
         <button class="back-btn" onclick="goBack()"><span aria-hidden="true">←</span> Back</button>
         <div class="page-heading"><p class="eyebrow">MAKE TIME TO LEARN</p><h1>Study Planner</h1><p class="muted">Organise your learning and stay on track.</p></div>
-        <div class="coming-card"><span class="coming-icon">▣</span><h2>Coming soon</h2><p>Your personal study planner is being prepared.</p></div>
+        <div class="planner-stats" id="planner-stats" aria-live="polite"></div>
+        <div class="planner-layout">
+          <form id="planner-form" class="calendar-form planner-form" onsubmit="saveStudySession(event)">
+            <h2 id="planner-form-title">Schedule a study session</h2>
+            <p id="planner-notice" class="muted" role="status"></p>
+            <label>Registered course<select id="planner-course" required></select></label>
+            <label>Topic / study goal<input id="planner-topic" maxlength="160" placeholder="e.g. Revise database normalization" required></label>
+            <div class="planner-fields">
+              <label>Date<input id="planner-date" type="date" required></label>
+              <label>Start time<input id="planner-time" type="time" required></label>
+              <label>Duration (minutes)<input id="planner-duration" type="number" min="15" max="480" step="15" value="60" required></label>
+            </div>
+            <div class="planner-actions">
+              <button class="btn-primary" id="planner-save" type="submit">Save session</button>
+              <button class="btn-secondary" type="button" onclick="resetPlannerForm()">Clear</button>
+            </div>
+          </form>
+          <div class="planner-schedule">
+            <div class="planner-week-nav">
+              <button class="calendar-nav" onclick="movePlannerWeek(-1)" aria-label="Previous week">‹</button>
+              <h2 id="planner-week-label">This week</h2>
+              <button class="calendar-nav" onclick="movePlannerWeek(1)" aria-label="Next week">›</button>
+            </div>
+            <div id="planner-week-list" aria-live="polite"></div>
+          </div>
+        </div>
       </section>
 
       <!-- STUDY SETUP -->
