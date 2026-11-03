@@ -392,7 +392,7 @@ function openCourse(c) {
   const coursePapers = papersFor(c.code);
   for (let i = 0; i < coursePapers.length; i++) {
     const p = coursePapers[i];
-    pl.appendChild(resourceItem(p.year + " Past Paper", "Past paper · " + p.year, file_path));
+    pl.appendChild(resourceItem(p.title || (p.year + " Past Paper"), p.year ? "Past paper · " + p.year : "Past paper", p.file_path));
   }
   if (coursePapers.length === 0) pl.appendChild(emptyItem("No past papers uploaded yet."));
 
