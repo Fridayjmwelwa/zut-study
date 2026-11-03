@@ -411,3 +411,5 @@ body.setup-mode #bottom-nav { display:none; }
 .planner-session-actions button {background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px;color:var(--text);cursor:pointer;font-size:.78rem;}
 @media(min-width:850px){.planner-layout{grid-template-columns:minmax(260px,.9fr) minmax(0,1.1fr);}}
 @media(max-width:360px){.planner-fields{grid-template-columns:1fr;}.planner-fields label:last-child{grid-column:auto;}}
+.resource-actions { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+.resource-actions .download-btn { margin-left: 0; }

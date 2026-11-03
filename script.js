@@ -315,7 +315,7 @@ function renderLibrary() {
 el("library-search").addEventListener("input", renderLibrary);
 
 // ================= COURSE DETAIL =================
-function resourceItem(title, info, url) {
+function resourceItem(title, info, path) {
   const li = document.createElement("li");
   const s = document.createElement("strong");
   s.innerText = title;
@@ -323,18 +323,58 @@ function resourceItem(title, info, url) {
   sp.innerText = info;
   li.appendChild(s);
   li.appendChild(sp);
-  if (url) {
-    const a = document.createElement("a");
-    a.className = "download-btn";
-    a.href = url;
-    a.target = "_blank";
-    a.rel = "noopener";
-    a.innerText = "Download";
-    li.appendChild(a);
+  if (path) {
+    const box = document.createElement("div");
+    box.className = "resource-actions";
+    const ext = (path.split(".").pop() || "pdf").toLowerCase();
+    const fileName = title.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") + "." + ext;
+
+    const view = document.createElement("a");
+    view.className = "download-btn";
+    view.href = "#";
+    view.innerText = "Open";
+    view.addEventListener("click", function (e) {
+      e.preventDefault();
+      openResource(path, view, false, fileName);
+    });
+
+    const save = document.createElement("a");
+    save.className = "download-btn";
+    save.href = "#";
+    save.innerText = "Download";
+    save.addEventListener("click", function (e) {
+      e.preventDefault();
+      openResource(path, save, true, fileName);
+    });
+
+    box.appendChild(view);
+    box.appendChild(save);
+    li.appendChild(box);
   }
   return li;
 }
 
+async function openResource(path, link, download, fileName) {
+  const label = link.innerText;
+  link.innerText = "Please wait...";
+  const win = download ? null : window.open("", "_blank");
+  const options = download ? { download: fileName } : undefined;
+  const { data, error } = await db.storage.from("resources").createSignedUrl(path, 300, options);
+  link.innerText = label;
+  if (error || !data) {
+    if (win) win.close();
+    alert("Could not open this file. Check your connection and try again.");
+    return;
+  }
+  if (download) {
+    window.location.href = data.signedUrl;
+  } else if (win) {
+    win.opener = null;
+    win.location.href = data.signedUrl;
+  } else {
+    window.location.href = data.signedUrl;
+  }
+}
 function setCourseTab(tab) {
   el("course-tab-papers").classList.toggle("active", tab === "papers");
   el("course-tab-materials").classList.toggle("active", tab === "materials");
@@ -352,7 +392,7 @@ function openCourse(c) {
   const coursePapers = papersFor(c.code);
   for (let i = 0; i < coursePapers.length; i++) {
     const p = coursePapers[i];
-    pl.appendChild(resourceItem(p.year + " Past Paper", "Past paper · " + p.year, p.file_url));
+    pl.appendChild(resourceItem(p.year + " Past Paper", "Past paper · " + p.year, file_path));
   }
   if (coursePapers.length === 0) pl.appendChild(emptyItem("No past papers uploaded yet."));
 
@@ -361,7 +401,7 @@ function openCourse(c) {
   const courseMaterials = materialsFor(c.code);
   for (let i = 0; i < courseMaterials.length; i++) {
     const m = courseMaterials[i];
-    ml.appendChild(resourceItem(m.title || "Study material", m.topic || "Study material", m.file_url));
+    ml.appendChild(resourceItem(m.title || "Study material", m.topic || "Study material", file_path));
   }
   if (courseMaterials.length === 0) ml.appendChild(emptyItem("No study materials uploaded yet."));
 
