@@ -401,7 +401,7 @@ function openCourse(c) {
   const courseMaterials = materialsFor(c.code);
   for (let i = 0; i < courseMaterials.length; i++) {
     const m = courseMaterials[i];
-    ml.appendChild(resourceItem(m.title || "Study material", m.topic || "Study material", file_path));
+    ml.appendChild(resourceItem(m.title || "Study material", m.topic || "Study material",m.file_path));
   }
   if (courseMaterials.length === 0) ml.appendChild(emptyItem("No study materials uploaded yet."));
 
