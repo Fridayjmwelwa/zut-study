@@ -113,7 +113,7 @@ function papersFor(code) {
       return sameCode(p.course, code);
     })
     .sort(function (a, b) {
-      return b.year - a.year;
+      return (b.year || 0) - (a.year || 0);
     });
 }
 
