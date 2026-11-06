@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ZUT Study Admin</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:#eef3f6;color:#14232b;font-size:16px}
+main{max-width:640px;margin:0 auto;padding:16px 16px 48px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#0b3a4f;color:#fff;border-radius:16px;padding:16px;margin-bottom:16px}
+.top h1{margin:0;font-size:20px}.top p{margin:4px 0 0;font-size:14px;opacity:.85;overflow-wrap:anywhere}
+.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 1px 4px rgba(20,40,60,.12)}
+h2{margin:0 0 12px;font-size:18px}h3{margin:18px 0 8px;font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:#52707e}
+label{display:block;font-weight:600;font-size:14px;margin-bottom:12px}
+input,select{display:block;width:100%;margin-top:6px;padding:12px;font-size:16px;border:1px solid #b9c8d0;border-radius:10px;background:#fff;color:#14232b}
+button{padding:13px 16px;border:0;border-radius:12px;background:#0b6b86;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+button:disabled{opacity:.6}.ghost{background:transparent;border:1px solid #fff;padding:8px 12px;font-size:14px}
+form button,#login-btn{width:100%}
+.msg{min-height:20px;font-size:14px;margin:10px 0 0;color:#52707e}.err{color:#b3261e}
+ul{list-style:none;margin:0;padding:0}
+li{border:1px solid #d5e0e6;border-radius:12px;padding:12px;margin-bottom:8px}
+li strong{display:block}li span{display:block;font-size:13px;color:#52707e;overflow-wrap:anywhere;margin-top:2px}
+.row{display:flex;gap:8px;margin-top:10px}.row button{flex:1;padding:9px;font-size:14px}.danger{background:#b3261e}
+.empty{color:#52707e;font-size:14px}
+.checks{max-height:220px;overflow:auto;border:1px solid #b9c8d0;border-radius:10px;padding:6px;margin-top:6px}.checks label{display:flex;gap:10px;align-items:center;font-weight:500;margin:0;padding:7px 4px}.checks input{width:20px;height:20px;margin:0;flex:none}
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+    <div><h1>ZUT Study Admin</h1><p id="who">Not signed in</p></div>
+    <button id="logout-btn" class="ghost" hidden>Log out</button>
+  </header>
+
+  <section id="login-box" class="card" hidden>
+    <h2>Staff log in</h2>
+    <label>Email<input id="login-email" type="email" autocomplete="username"></label>
+    <label>Password<input id="login-password" type="password" autocomplete="current-password"></label>
+    <button id="login-btn" type="button">Log in</button>
+    <p id="login-msg" class="msg err"></p>
+  </section>
+
+  <section id="denied-box" class="card" hidden>
+    <h2>No access</h2>
+    <p>This account is not a lecturer or admin account. Ask the app owner to give you access, then log in again.</p>
+  </section>
+
+  <div id="panel" hidden>
+    <section class="card">
+      <h2>Upload a document</h2>
+      <form id="upload-form">
+        <label>Course<select id="up-course"></select></label>
+        <label>Type
+          <select id="up-type"><option value="paper">Past paper</option><option value="material">Study material</option></select>
+        </label>
+        <label id="year-row">Year (for example 2024)<input id="up-year" type="number" inputmode="numeric" min="1990" max="2100"></label>
+        <label><span id="title-label">Title (optional, for example December Session)</span><input id="up-title" maxlength="120"></label>
+        <label id="topic-row" hidden>Topic<input id="up-topic" maxlength="120" placeholder="for example Binary and hex"></label>
+        <label>PDF file (maximum 10 MB)<input id="up-file" type="file" accept="application/pdf,.pdf"></label>
+        <button id="up-btn" type="submit">Upload</button>
+        <p id="up-msg" class="msg"></p>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Uploaded documents</h2>
+      <label>Course<select id="list-course"></select></label>
+      <h3>Past papers</h3><ul id="list-papers"></ul>
+      <h3>Study materials</h3><ul id="list-materials"></ul>
+    </section>
+
+    <section id="staff-card" class="card" hidden>
+      <h2>Staff access</h2>
+      <p class="empty">Give a lecturer access to upload for their courses. They must sign up in the app first.</p>
+      <label>Lecturer's email<input id="staff-email" type="email" placeholder="name@example.com"></label>
+      <label>Role
+        <select id="staff-role"><option value="lecturer">Lecturer (own courses only)</option><option value="admin">Admin (all courses)</option></select>
+      </label>
+      <div id="staff-courses-row">
+        <label>Courses this lecturer can manage</label>
+        <div id="staff-courses" class="checks"></div>
+      </div>
+      <button id="staff-save" type="button" style="margin-top:12px">Save access</button>
+      <p id="staff-msg" class="msg"></p>
+      <h3>Current staff</h3>
+      <ul id="staff-list"></ul>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://gzhnivjqqopmvdkseedc.supabase.co";
+const SUPABASE_KEY = "sb_publishable_tF4wPHHsaAdxUUjz5VrKFA_2dxOp2qs";
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const MAX_BYTES = 10 * 1024 * 1024;
+let me = null, role = null, myCourses = [];
+const $ = function (id) { return document.getElementById(id); };
+function show(id, on) { $(id).hidden = !on; }
+function slug(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "file"; }
+
+async function init(session) {
+  me = session ? session.user : null;
+  show("login-box", !me); show("denied-box", false); show("panel", false); show("logout-btn", !!me);
+  $("who").textContent = me ? me.email : "Not signed in";
+  if (!me) return;
+
+  const r = await db.from("user_roles").select("role").eq("user_id", me.id).maybeSingle();
+  role = r.data ? r.data.role : null;
+  if (!role) { show("denied-box", true); return; }
+
+  const c = await db.from("courses").select("code,name").order("code");
+  let all = c.data || [];
+  if (role === "lecturer") {
+    const lc = await db.from("lecturer_courses").select("course_code").eq("user_id", me.id);
+    const codes = (lc.data || []).map(function (x) { return x.course_code.trim().toLowerCase(); });
+    all = all.filter(function (x) { return codes.indexOf(x.code.trim().toLowerCase()) !== -1; });
+  }
+  myCourses = all;
+  $("who").textContent = me.email + " · " + role;
+  fillCourses("up-course"); fillCourses("list-course");
+  show("panel", true);
+  show("staff-card", role === "admin");
+  if (role === "admin") { buildStaffCourses(); loadStaff(); }
+  if (myCourses.length === 0) $("up-msg").textContent = "No courses are assigned to you yet.";
+  loadLists();
+}
+
+function fillCourses(id) {
+  const box = $(id); box.innerHTML = "";
+  myCourses.forEach(function (c) {
+    const o = document.createElement("option");
+    o.value = c.code; o.textContent = c.name ? c.code + ": " + c.name : c.code;
+    box.appendChild(o);
+  });
+}
+
+$("up-type").addEventListener("change", function () {
+  const paper = this.value === "paper";
+  show("year-row", paper); show("topic-row", !paper);
+  $("title-label").textContent = paper ? "Title (optional, for example December Session)" : "Title";
+});
+$("list-course").addEventListener("change", loadLists);
+
+$("upload-form").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  const msg = $("up-msg"), btn = $("up-btn");
+  msg.className = "msg err";
+  const course = $("up-course").value, type = $("up-type").value;
+  const yearRaw = $("up-year").value.trim(), title = $("up-title").value.trim(), topic = $("up-topic").value.trim();
+  const file = $("up-file").files[0];
+
+  if (!course) { msg.textContent = "Choose a course."; return; }
+  if (!file) { msg.textContent = "Choose a PDF file."; return; }
+  if (!/\.pdf$/i.test(file.name) || (file.type && file.type !== "application/pdf")) { msg.textContent = "Only PDF files are allowed."; return; }
+  if (file.size > MAX_BYTES) { msg.textContent = "That file is over 10 MB. Compress it and try again."; return; }
+  let year = null;
+  if (type === "paper") {
+    if (yearRaw) {
+      year = Number(yearRaw);
+      if (!Number.isInteger(year) || year < 1990 || year > 2100) { msg.textContent = "Enter a valid year."; return; }
+    }
+    if (!year && !title) { msg.textContent = "Enter a year or a title."; return; }
+  } else if (!title) { msg.textContent = "Enter a title for the material."; return; }
+
+  btn.disabled = true; msg.className = "msg"; msg.textContent = "Uploading...";
+  const folder = type === "paper" ? "papers" : "notes";
+  const base = (type === "paper" ? course + "-" + (year || slug(title)) : slug(title)).toLowerCase();
+  const path = course + "/" + folder + "/" + base + "-" + Math.random().toString(36).slice(2, 6) + ".pdf";
+
+  const up = await db.storage.from("resources").upload(path, file, { contentType: "application/pdf", upsert: false });
+  if (up.error) { msg.className = "msg err"; msg.textContent = "Upload failed: " + up.error.message; btn.disabled = false; return; }
+
+  const row = type === "paper"
+    ? { course: course, year: year, title: title || null, file_path: path }
+    : { course: course, title: title, topic: topic || "Study material", file_path: path };
+  const ins = await db.from(type === "paper" ? "papers" : "materials").insert(row);
+  if (ins.error) {
+    await db.storage.from("resources").remove([path]);
+    msg.className = "msg err"; msg.textContent = "Could not save the record: " + ins.error.message; btn.disabled = false; return;
+  }
+  $("upload-form").reset(); show("year-row", true); show("topic-row", false);
+  $("up-course").value = course; $("list-course").value = course;
+  msg.textContent = "Uploaded. Students can see it now."; btn.disabled = false;
+  loadLists();
+});
+
+async function loadLists() {
+  const course = $("list-course").value;
+  if (!course) return;
+  const p = await db.from("papers").select("id,year,title,file_path").eq("course", course).order("year", { ascending: false });
+  const m = await db.from("materials").select("id,title,topic,file_path").eq("course", course);
+  renderList($("list-papers"), p, "papers");
+  renderList($("list-materials"), m, "materials");
+}
+
+function renderList(ul, res, table) {
+  ul.innerHTML = "";
+  if (res.error) { const li = document.createElement("li"); li.className = "empty"; li.textContent = "Could not load: " + res.error.message; ul.appendChild(li); return; }
+  if (!res.data.length) { const li = document.createElement("li"); li.className = "empty"; li.textContent = "Nothing uploaded yet."; ul.appendChild(li); return; }
+  res.data.forEach(function (r) {
+    const li = document.createElement("li");
+    const s = document.createElement("strong");
+    s.textContent = r.title || (table === "papers" ? (r.year || "") + " Past Paper" : "Untitled");
+    const sp = document.createElement("span");
+    sp.textContent = (table === "papers" ? (r.year ? "Year " + r.year + " · " : "") : (r.topic ? r.topic + " · " : "")) + (r.file_path || "no file linked");
+    const row = document.createElement("div"); row.className = "row";
+    const ren = document.createElement("button"); ren.type = "button"; ren.textContent = "Rename";
+    ren.onclick = function () { renameRow(table, r); };
+    const del = document.createElement("button"); del.type = "button"; del.className = "danger"; del.textContent = "Delete";
+    del.onclick = function () { deleteRow(table, r); };
+    row.appendChild(ren); row.appendChild(del);
+    li.appendChild(s); li.appendChild(sp); li.appendChild(row);
+    ul.appendChild(li);
+  });
+}
+
+async function renameRow(table, r) {
+  const t = prompt("New title:", r.title || "");
+  if (t === null) return;
+  const clean = t.trim();
+  if (!clean || clean.length > 120) { alert("Enter a title up to 120 characters."); return; }
+  const res = await db.from(table).update({ title: clean }).eq("id", r.id).select();
+  if (res.error || !res.data.length) alert("Could not rename: " + (res.error ? res.error.message : "not allowed"));
+  loadLists();
+}
+
+async function deleteRow(table, r) {
+  if (!confirm("Delete this document? Students will no longer see it.")) return;
+  const res = await db.from(table).delete().eq("id", r.id).select();
+  if (res.error || !res.data.length) { alert("Could not delete: " + (res.error ? res.error.message : "not allowed")); return; }
+  if (r.file_path) await db.storage.from("resources").remove([r.file_path]);
+  loadLists();
+}
+
+function buildStaffCourses() {
+  const box = $("staff-courses"); box.innerHTML = "";
+  myCourses.forEach(function (c) {
+    const l = document.createElement("label");
+    const cb = document.createElement("input"); cb.type = "checkbox"; cb.value = c.code;
+    const t = document.createElement("span"); t.textContent = c.name ? c.code + ": " + c.name : c.code;
+    l.appendChild(cb); l.appendChild(t); box.appendChild(l);
+  });
+}
+function tickedCourses() {
+  return Array.from($("staff-courses").querySelectorAll("input:checked")).map(function (i) { return i.value; });
+}
+function setTicked(codes) {
+  const low = (codes || []).map(function (x) { return x.toLowerCase(); });
+  $("staff-courses").querySelectorAll("input").forEach(function (i) { i.checked = low.indexOf(i.value.toLowerCase()) !== -1; });
+}
+$("staff-role").addEventListener("change", function () { show("staff-courses-row", this.value === "lecturer"); });
+
+async function loadStaff() {
+  const ul = $("staff-list"); ul.innerHTML = "";
+  const res = await db.rpc("admin_list_staff");
+  if (res.error) { const li = document.createElement("li"); li.className = "empty"; li.textContent = "Could not load staff: " + res.error.message; ul.appendChild(li); return; }
+  res.data.forEach(function (r) {
+    const li = document.createElement("li");
+    const s = document.createElement("strong"); s.textContent = r.email;
+    const sp = document.createElement("span");
+    sp.textContent = r.role === "admin" ? "Admin (all courses)" : "Lecturer: " + ((r.courses || []).join(", ") || "no courses");
+    const row = document.createElement("div"); row.className = "row";
+    const ed = document.createElement("button"); ed.type = "button"; ed.textContent = "Edit";
+    ed.onclick = function () {
+      $("staff-email").value = r.email; $("staff-role").value = r.role;
+      show("staff-courses-row", r.role === "lecturer"); setTicked(r.courses);
+      $("staff-email").scrollIntoView({ behavior: "smooth", block: "center" });
+    };
+    const rm = document.createElement("button"); rm.type = "button"; rm.className = "danger"; rm.textContent = "Remove";
+    rm.onclick = async function () {
+      if (!confirm("Remove staff access for " + r.email + "?")) return;
+      const d = await db.rpc("admin_remove_staff", { p_user: r.user_id });
+      if (d.error) alert(d.error.message);
+      loadStaff();
+    };
+    row.appendChild(ed); row.appendChild(rm);
+    li.appendChild(s); li.appendChild(sp); li.appendChild(row); ul.appendChild(li);
+  });
+}
+
+$("staff-save").addEventListener("click", async function () {
+  const msg = $("staff-msg"); msg.className = "msg err";
+  const email = $("staff-email").value.trim(), r = $("staff-role").value;
+  const courses = r === "lecturer" ? tickedCourses() : [];
+  if (!email) { msg.textContent = "Enter the person's email."; return; }
+  if (r === "lecturer" && courses.length === 0) { msg.textContent = "Tick at least one course."; return; }
+  msg.className = "msg"; msg.textContent = "Saving...";
+  const res = await db.rpc("admin_set_staff", { p_email: email, p_role: r, p_courses: courses });
+  if (res.error) { msg.className = "msg err"; msg.textContent = res.error.message; return; }
+  msg.textContent = "Saved. They can log in to the admin page now.";
+  $("staff-email").value = ""; setTicked([]); loadStaff();
+});
+
+$("login-btn").addEventListener("click", async function () {
+  const msg = $("login-msg"); msg.textContent = "Please wait...";
+  const res = await db.auth.signInWithPassword({ email: $("login-email").value.trim(), password: $("login-password").value });
+  msg.textContent = res.error ? res.error.message : "";
+});
+$("logout-btn").addEventListener("click", function () { db.auth.signOut(); });
+
+db.auth.onAuthStateChange(function (event, session) {
+  if (event === "TOKEN_REFRESHED") return;
+  setTimeout(function () { init(session); }, 0);
+});
+</script>
+</body>
+</html>
